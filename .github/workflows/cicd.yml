@@ -19,3 +19,14 @@ jobs:
           KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
         with:
           command: helm upgrade httpexample --install --wait httpservice -f httpservice/values.yaml -n joaquin
+
+      - name: Get Load Balancer URL
+        id: url
+        uses: koslib/helm-eks-action@master
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+        with:
+          command: kubectl get svc httpexample-httpservice -o json -n joaquin | jq -r '.status.loadBalancer.ingress[0].hostname'
+
+      - name: Print LoadBalancer url
+        run: echo "LoadBalancer url is ${{ steps.url.outputs.response }}"
