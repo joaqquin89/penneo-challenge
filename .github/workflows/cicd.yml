@@ -1,18 +1,21 @@
 on: push
-name: deploy
+name: deploy-helmchart
 jobs:
-  build-and-push:
-    name: build and push image
+  deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
+      - uses: actions/checkout@v2
 
-    - name: build and push to docker
-      uses: docker/build-push-action@v1
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        repository: postmanlabs/httpbin
-        tag_with_ref: true
-        tag_with_sha: true
-        tags: ${{ github.sha }}
+      - name: AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+
+      - name: helm deploy
+        uses: koslib/helm-eks-action@master
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+        with:
+          command: helm upgrade httpexample httpservice --install --wait <chart> -f httpservice/values.yaml
